@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; connect-src 'none'; img-src data: blob:; media-src data: blob:; font-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'none'">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тренажёр TravelLine: Обслуживание номеров (Супервайзер)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 10px;
+      overflow-x: hidden;
+    }
+
+    /* Корпус смартфона */
+    .phone-wrapper {
+      width: 100%;
+      max-width: 380px;
+      height: 780px;
+      background: #111827;
+      border-radius: 44px;
+      padding: 12px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35),
+                  0 0 0 1px rgba(0, 0, 0, 0.08),
+                  inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Динамик */
+    .phone-speaker {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90px;
+      height: 5px;
+      background: #27272a;
+      border-radius: 4px;
+      z-index: 100;
+    }
+
+    /* Экран устройства */
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #f0f3f8;
+      border-radius: 34px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Строка состояния */
+    .status-bar {
+      height: 38px;
+      background: #12449a;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 22px 6px;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      z-index: 30;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-icons svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+    }
+
+    /* Шапка TravelLine Extranet */
+    .tl-header {
+      background: #12449a;
+      padding: 6px 16px 10px;
+      color: #ffffff;
+      z-index: 25;
+      transition: background 0.2s;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 42px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      font-size: 16.5px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .header-date {
+      font-size: 12px;
+      opacity: 0.85;
+      font-weight: 400;
+      margin-top: 1px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+
+    .filter-badge-counter {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 17px;
+      height: 17px;
+      background: #f59e0b;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid #12449a;
+    }
+
+    /* Подвкладки СЕГОДНЯ / ЗАВТРА */
+    .sub-tabs-bar {
+      display: flex;
+      background: #12449a;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      z-index: 22;
+    }
+
+    .sub-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: rgba(255, 255, 255, 0.65);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .sub-tab.active {
+      color: #ffffff;
+    }
+
+    .sub-tab.active::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #ffffff;
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Вкладки НОМЕРА / УБОРКИ */
+    .module-tabs-bar {
+      display: none;
+      background: #12449a;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      z-index: 22;
+    }
+
+    .module-tab {
+      flex: 1;
+      text-align: center;
+      padding: 11px 0 10px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.65);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .module-tab.active {
+      color: #ffffff;
+    }
+
+    .module-tab.active::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #ffffff;
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Основная рабочая область */
+    .screen-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      background: #f0f3f8;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ЭКРАН 1: Дашборд сводки "Обслуживание номеров" */
+    .dashboard-view {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stats-grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .stat-card:active {
+      transform: scale(0.98);
+    }
+
+    .stat-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .stat-card-body {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stat-circle-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-circle-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: #ffffff;
+    }
+
+    .stat-circle-icon.icon-dirty {
+      background: #e4175b;
+    }
+
+    .stat-circle-icon.icon-clean {
+      background: #f4511e;
+    }
+
+    .stat-circle-icon.icon-checked {
+      background: #48af45;
+    }
+
+    .stat-circle-icon.icon-refused {
+      background: #00bcd4;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 400;
+      color: #1e293b;
+      line-height: 1;
+    }
+
+    /* Блок Номеров на ремонте */
+    .repair-block {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .repair-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .repair-action {
+      color: #1b58b8;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Блок Виды обслуживания */
+    .services-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .services-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+
+    .services-header-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .services-header-link {
+      font-size: 12px;
+      color: #1b58b8;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .services-cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .service-card-blue {
+      background: #00a4e4;
+      border-radius: 8px;
+      padding: 14px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 110px;
+    }
+
+    .service-card-blue svg {
+      width: 24px;
+      height: 24px;
+      fill: #ffffff;
+    }
+
+    .service-card-right-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .service-card-sub {
+      background: #009390;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .service-card-sub.sub-blue {
+      background: #1b73e8;
+    }
+
+    .sub-title {
+      font-size: 11px;
+      opacity: 0.95;
+    }
+
+    .sub-count {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    /* Плавающая кнопка супервайзера */
+    .fab-btn {
+      position: absolute;
+      bottom: 18px;
+      right: 18px;
+      height: 48px;
+      background: #1b58b8;
+      color: #ffffff;
+      border: none;
+      border-radius: 24px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(27, 88, 184, 0.4);
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    .fab-btn-round {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .fab-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* ЭКРАН 2: Список уборок (вкладка УБОРКИ) */
+    .cleanings-view {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 8px;
+      position: relative;
+    }
+
+    .cleaning-card-sup {
+      background: #ffffff;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      position: relative;
+    }
+
+    .sup-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .sup-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sup-clean-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #2b3648;
+    }
+
+    .sup-room-subline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .sup-room-num {
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .sup-room-state {
+      font-weight: 500;
+    }
+
+    .state-living {
+      color: #8b3d97;
+    }
+
+    .state-free {
+      color: #10b981;
+    }
+
+    .state-dirty {
+      color: #e4175b;
+      font-weight: 600;
+    }
+
+    .sup-status-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 12px;
+      border-radius: 18px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: all 0.25s ease;
+    }
+
+    .status-badge.not-done {
+      background: #e4175b;
+      color: #ffffff;
+    }
+
+    .status-badge.completed {
+      background: #f4511e;
+      color: #ffffff;
+    }
+
+    .status-badge.checked {
+      background: #48af45;
+      color: #ffffff;
+    }
+
+    .status-badge.rejected {
+      background: #d32f2f;
+      color: #ffffff;
+    }
+
+    /* Кнопка трех точек ⋮ */
+    .dots-menu-btn {
+      background: none;
+      border: none;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #64748b;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .dots-menu-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .dots-menu-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Сетка деталей */
+    .card-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      row-gap: 6px;
+      column-gap: 8px;
+      font-size: 12px;
+      color: #475569;
+      margin-top: 4px;
+    }
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .detail-item svg {
+      width: 14px;
+      height: 14px;
+      fill: #8592a6;
+      flex-shrink: 0;
+    }
+
+    .comment-block-sup {
+      grid-column: span 2;
+      background: #fff1f2;
+      border-left: 3px solid #e4175b;
+      padding: 6px 10px;
+      border-radius: 0 6px 6px 0;
+      color: #9f1239;
+      font-size: 11.5px;
+      display: none;
+      align-items: flex-start;
+      gap: 6px;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    .comment-block-sup svg {
+      width: 15px;
+      height: 15px;
+      fill: #e4175b;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* КОНТЕКСТНОЕ МЕНЮ (POPOVER) ДЛЯ КАРТОЧКИ УБОРКИ */
+    .context-popover {
+      position: absolute;
+      top: 36px;
+      right: 12px;
+      width: 220px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.25),
+                  0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+      z-index: 60;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: popIn 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .popover-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #334155;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .popover-item:hover {
+      background: #f8fafc;
+    }
+
+    .popover-item svg {
+      width: 16px;
+      height: 16px;
+      fill: #64748b;
+      flex-shrink: 0;
+    }
+
+    /* ПУЛЬСИРУЮЩАЯ РАМКА ПОДСВЕТКИ #48AF45 */
+    @keyframes greenPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(72, 175, 69, 0.8);
+      }
+      70% {
+        box-shadow: 0 0 0 8px rgba(72, 175, 69, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(72, 175, 69, 0);
+      }
+    }
+
+    .pulse-target {
+      position: relative;
+      border: 2px solid #48AF45 !important;
+      border-radius: 8px;
+      animation: greenPulse 1.6s infinite ease-in-out;
+      z-index: 50 !important;
+    }
+
+    /* БОКОВОЕ МЕНЮ (НАЧАЛЬНЫЙ ЭКРАН С АВАТАРОМ 1) */
+    .drawer-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 80;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s;
+    }
+
+    .drawer-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .drawer-menu {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 78%;
+      max-width: 290px;
+      background: #ffffff;
+      z-index: 85;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .drawer-menu.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      background: #12449a;
+      padding: 44px 16px 14px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .drawer-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-avatar-num {
+      width: 44px;
+      height: 44px;
+      background: #0d3275;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .drawer-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+      background: #ffffff;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 11px 16px;
+      gap: 14px;
+      color: #334155;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .nav-item:hover {
+      background: #f8fafc;
+    }
+
+    .nav-item.highlighted-item {
+      background: #eaf1fb;
+      color: #12449a;
+      font-weight: 600;
+    }
+
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      fill: #12449a;
+      flex-shrink: 0;
+    }
+
+    .nav-item-title {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-badge-new {
+      background: #1b58b8;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    /* МОДАЛЬНОЕ ОКНО ОТКЛОНЕНИЯ РЕЗУЛЬТАТА (BOTTOM SHEET) */
+    .reject-sheet-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 70;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s;
+    }
+
+    .reject-sheet-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .reject-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-radius: 20px 20px 0 0;
+      padding: 18px 20px 24px;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1);
+      z-index: 75;
+      box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .reject-sheet.open {
+      transform: translateY(0);
+    }
+
+    .reject-sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .reject-sheet-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .reject-sheet-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .reject-field-box {
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .reject-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .reject-textarea {
+      width: 100%;
+      height: 70px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #1e293b;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      background: #f8fafc;
+    }
+
+    .reject-textarea:focus {
+      border-color: #e4175b;
+      background: #ffffff;
+    }
+
+    .reject-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-reject-confirm {
+      flex: 1;
+      height: 44px;
+      background: #e4175b;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-reject-cancel {
+      width: 100px;
+      height: 44px;
+      background: #ffffff;
+      color: #64748b;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Модальное окно завершения */
+    .finish-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(18, 68, 154, 0.88);
+      backdrop-filter: blur(4px);
+      z-index: 95;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .finish-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .finish-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 26px 20px;
+      text-align: center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      max-width: 300px;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .finish-overlay.active .finish-card {
+      transform: scale(1);
+    }
+
+    .finish-icon {
+      width: 58px;
+      height: 58px;
+      background: #fee2e2;
+      color: #e4175b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .finish-icon.success-icon {
+      background: #e8f5e9;
+      color: #48af45;
+    }
+
+    .finish-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .finish-desc {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.45;
+      margin-bottom: 20px;
+    }
+
+    .finish-restart-btn {
+      width: 100%;
+      height: 44px;
+      background: #1b58b8;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(27, 88, 184, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Мобильный корпус -->
+  <div class="phone-wrapper">
+    <div class="phone-speaker"></div>
+    <div class="phone-screen">
+      
+      <!-- Статус-бар -->
+      <div class="status-bar">
+        <span>16:20</span>
+        <div class="status-icons">
+          <svg viewBox="0 0 24 24"><path d="M2 18h4v4H2zm6-4h4v8H8zm6-4h4v12h-4zm6-6h4v18h-4z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98C20.93 5.9 16.69 4 12 4zm0 3c3.75 0 7.15 1.48 9.69 3.91L12 18.5 2.31 10.91C4.85 8.48 8.25 7 12 7z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M16 4h-2V2h-4v2H8C6.9 4 6 4.9 6 6v14c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H8V6h8v14z"/></svg>
+        </div>
+      </div>
+
+      <!-- Шапка TravelLine -->
+      <header class="tl-header" id="main-header">
+        <div class="header-top">
+          <div class="header-left">
+            <button class="icon-btn" id="header-nav-btn" aria-label="Меню">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" id="header-icon-svg">
+                <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+              </svg>
+            </button>
+            <div class="header-titles">
+              <span class="header-title" id="header-title-text">Обслуживание номеров</span>
+              <span class="header-date">16.12.2024</span>
+            </div>
+          </div>
+          <div class="header-right">
+            <button class="icon-btn" aria-label="Фильтры">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+              </svg>
+            </button>
+            <div class="filter-badge-counter" id="filter-counter" style="display: none;">1</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Подвкладки СЕГОДНЯ / ЗАВТРА (для экрана сводки) -->
+      <nav class="sub-tabs-bar" id="today-tabs">
+        <div class="sub-tab active">СЕГОДНЯ</div>
+        <div class="sub-tab">ЗАВТРА</div>
+      </nav>
+
+      <!-- Вкладки НОМЕРА / УБОРКИ (для экрана списка) -->
+      <nav class="module-tabs-bar" id="list-tabs">
+        <div class="module-tab" id="tab-sup-rooms">НОМЕРА</div>
+        <div class="module-tab active" id="tab-sup-cleanings">УБОРКИ</div>
+      </nav>
+
+      <!-- Основная область экранов -->
+      <main class="screen-content">
+        
+        <!-- ЭКРАН 1: Дашборд супервайзера -->
+        <div class="dashboard-view" id="view-dashboard">
+          
+          <!-- Сетка карточек 2x2 -->
+          <div class="stats-grid-2x2">
+            <!-- КАРТОЧКА ГРЯЗНО 21 (ЦЕЛЬ ШАГА 1) -->
+            <div class="stat-card" id="card-dirty-21">
+              <span class="stat-card-title">Грязно</span>
+              <div class="stat-card-body">
+                <div class="stat-circle-icon icon-dirty">
+                  <svg viewBox="0 0 24 24"><path d="M19 13h-6V4h-2v9H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zM5 19v-4h14v4H5z"/></svg>
+                </div>
+                <span class="stat-number" id="dash-dirty-count">21</span>
+              </div>
+            </div>
+
+            <!-- Убрано 1 -->
+            <div class="stat-card">
+              <span class="stat-card-title">Убрано</span>
+              <div class="stat-card-body">
+                <div class="stat-circle-icon icon-clean">
+                  <svg viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5z"/></svg>
+                </div>
+                <span class="stat-number">1</span>
+              </div>
+            </div>
+
+            <!-- Проверено 3 -->
+            <div class="stat-card">
+              <span class="stat-card-title">Проверено</span>
+              <div class="stat-card-body">
+                <div class="stat-circle-icon icon-checked">
+                  <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span class="stat-number" id="dash-checked-count">3</span>
+              </div>
+            </div>
+
+            <!-- Отказ от уборки 0 -->
+            <div class="stat-card">
+              <span class="stat-card-title">Отказ от уборки</span>
+              <div class="stat-card-body">
+                <div class="stat-circle-icon icon-refused">
+                  <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                </div>
+                <span class="stat-number">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Номеров на ремонте -->
+          <div class="repair-block">
+            <span class="repair-title">Номеров на ремонте</span>
+            <span class="repair-action">+ Назначить ремонт</span>
+          </div>
+
+          <!-- Виды обслуживания -->
+          <div class="services-block">
+            <div class="services-header">
+              <span class="services-header-title">Виды обслуживания</span>
+              <span class="services-header-link">Показать все</span>
+            </div>
+            <div class="services-cards-row">
+              <div class="service-card-blue">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6V4h-2v9H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2z"/></svg>
+                <div>
+                  <div class="sub-title">Все уборки</div>
+                  <div class="sub-count">6</div>
+                </div>
+              </div>
+              <div class="service-card-right-stack">
+                <div class="service-card-sub">
+                  <span class="sub-title">Выездная уборка</span>
+                  <span class="sub-count">0</span>
+                </div>
+                <div class="service-card-sub sub-blue">
+                  <span class="sub-title">Текущая уборка</span>
+                  <span class="sub-count">5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Плавающая кнопка супервайзера -->
+          <button class="fab-btn">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <span>Назначить уборку</span>
+          </button>
+        </div>
+
+        <!-- ЭКРАН 2: Список уборок (УБОРКИ) -->
+        <div class="cleanings-view" id="view-cleanings-sup">
+          
+          <!-- Карточка 1: Внеплановая уборка (4 Свободно) -->
+          <div class="cleaning-card-sup">
+            <div class="sup-card-header">
+              <div class="sup-title-group">
+                <span class="sup-clean-title">Внеплановая уборка</span>
+                <div class="sup-room-subline">
+                  <span class="sup-room-num">4</span>
+                  <span class="sup-room-state state-free">Свободно</span>
+                </div>
+              </div>
+              <div class="sup-status-right">
+                <span class="status-badge not-done">Не выполнено</span>
+                <button class="dots-menu-btn"><svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+              </div>
+            </div>
+            <div class="card-details-grid">
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>Нет выездов</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Иванова Ирина Иван...</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM10.59 15.41L12 14l-4-4 4-4-1.41-1.41L5.17 10l5.42 5.41z"/></svg><span>Нет заездов</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg><span>-</span></div>
+            </div>
+          </div>
+
+          <!-- Карточка 2: Текущая уборка (6 Проживание, Выполнено) - ЦЕЛЬ ШАГА 3 -->
+          <div class="cleaning-card-sup" id="card-room-6-sup">
+            <div class="sup-card-header">
+              <div class="sup-title-group">
+                <span class="sup-clean-title">Текущая уборка</span>
+                <div class="sup-room-subline">
+                  <span class="sup-room-num">6</span>
+                  <span class="sup-room-state state-living" id="room-6-state-label">Проживание</span>
+                </div>
+              </div>
+              <div class="sup-status-right">
+                <span class="status-badge completed" id="badge-sup-6">Выполнено</span>
+                <!-- КНОПКА ТРЕХ ТОЧЕК (ШАГ 3) -->
+                <button class="dots-menu-btn" id="btn-dots-6">
+                  <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Контекстное меню (Popover) -->
+            <div class="context-popover" id="popover-sup-6">
+              <!-- Пункт "Подтвердить проверку" -->
+              <div class="popover-item" id="item-confirm-check">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                <span>Подтвердить проверку</span>
+              </div>
+              <!-- Пункт "Отклонить результат" (ЦЕЛЬ ШАГА 4) -->
+              <div class="popover-item" id="item-reject-check">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                <span>Отклонить результат</span>
+              </div>
+              <div class="popover-item">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                <span>Редактировать</span>
+              </div>
+              <div class="popover-item">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                <span>Добавить комментарий</span>
+              </div>
+              <div class="popover-item">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                <span>Удалить</span>
+              </div>
+            </div>
+
+            <div class="card-details-grid">
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>19.12.2024 12:00</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Иванова Ирина Иван...</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM10.59 15.41L12 14l-4-4 4-4-1.41-1.41L5.17 10l5.42 5.41z"/></svg><span>Нет заездов</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg><span>20 мин</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span>2 гостя</span></div>
+              
+              <!-- Замечание супервайзера (появляется при отклонении) -->
+              <div class="comment-block-sup" id="sup-reject-comment">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                <div>
+                  <strong>Замечание супервайзера:</strong><br>
+                  Перемыть зеркало, доложить полотенце
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Карточка 3: Текущая уборка (7 Проживание) -->
+          <div class="cleaning-card-sup">
+            <div class="sup-card-header">
+              <div class="sup-title-group">
+                <span class="sup-clean-title">Текущая уборка</span>
+                <div class="sup-room-subline">
+                  <span class="sup-room-num">7</span>
+                  <span class="sup-room-state state-living">Проживание</span>
+                </div>
+              </div>
+              <div class="sup-status-right">
+                <span class="status-badge not-done">Не выполнено</span>
+                <button class="dots-menu-btn"><svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+              </div>
+            </div>
+            <div class="card-details-grid">
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>19.12.2024 12:00</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Иванова Ирина Иван...</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM10.59 15.41L12 14l-4-4 4-4-1.41-1.41L5.17 10l5.42 5.41z"/></svg><span>Нет заездов</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg><span>20 мин</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>1 гость</span></div>
+            </div>
+          </div>
+
+          <!-- Карточка 4: Текущая уборка (8 Проживание) -->
+          <div class="cleaning-card-sup">
+            <div class="sup-card-header">
+              <div class="sup-title-group">
+                <span class="sup-clean-title">Текущая уборка</span>
+                <div class="sup-room-subline">
+                  <span class="sup-room-num">8</span>
+                  <span class="sup-room-state state-living">Проживание</span>
+                </div>
+              </div>
+              <div class="sup-status-right">
+                <span class="status-badge not-done">Не выполнено</span>
+                <button class="dots-menu-btn"><svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+              </div>
+            </div>
+            <div class="card-details-grid">
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>19.12.2024 12:00</span></div>
+              <div class="detail-item"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Иванова Ирина Иван...</span></div>
+            </div>
+          </div>
+
+          <!-- Круглая кнопка супервайзера + -->
+          <button class="fab-btn fab-btn-round">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          </button>
+        </div>
+
+      </main>
+
+      <!-- БОКОВОЕ МЕНЮ (НАЧАЛЬНЫЙ ЭКРАН С АВАТАРОМ 1) -->
+      <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+      <aside class="drawer-menu" id="drawer-menu">
+        <div class="drawer-header">
+          <div class="drawer-header-row">
+            <div class="drawer-avatar-num">1</div>
+            <div style="opacity: 0.85;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 2H9c-1.1 0-2 .9-2 2v3H5c-1.1 0-2 .9-2 2v13h18V2zm-8 2h6v3h-6V4zm8 16H5V9h2v11h12V4h2v16zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zm-8 4h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+              </svg>
+            </div>
+          </div>
+          <div style="font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.9);">Гостиница «Центральная»</div>
+        </div>
+
+        <nav class="drawer-nav">
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M4 13h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zm0 8h6c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1zm10 0h6c.55 0 1-.45 1-1v-8c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zm0-18v4c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1z"/></svg>
+            <span class="nav-item-title">Панель управления</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M4 3h16c.55 0 1 .45 1 1v4c0 .55-.45 1-1 1H4c-.55 0-1-.45-1-1V4c0-.55.45-1 1-1zm0 7h16c.55 0 1 .45 1 1v4c0 .55-.45 1-1 1H4c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1zm0 7h16c.55 0 1 .45 1 1v4c0 .55-.45 1-1 1H4c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1zM5 5v2h2V5H5zm0 7v2h2v-2H5zm0 7v2h2v-2H5z"/></svg>
+            <span class="nav-item-title">Шахматка</span>
+          </div>
+          <div class="nav-item highlighted-item" id="nav-housekeeping-sup">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6V4h-2v9H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zM5 19v-4h14v4H5z"/></svg>
+            <span class="nav-item-title">Обслуживание номер...</span>
+            <span class="nav-badge-new">NEW</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <span class="nav-item-title">Язык</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+            <span class="nav-item-title">Выход</span>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- ШТОРКА ОТКЛОНЕНИЯ С КОММЕНТАРИЕМ (ШАГ 5) -->
+      <div class="reject-sheet-backdrop" id="reject-backdrop" onclick="closeRejectSheet()"></div>
+      <div class="reject-sheet" id="reject-sheet">
+        <div class="reject-sheet-header">
+          <span class="reject-sheet-title">ОТКЛОНИТЬ РЕЗУЛЬТАТ УБОРКИ</span>
+          <button class="reject-sheet-close" onclick="closeRejectSheet()">✕</button>
+        </div>
+        <div class="reject-field-box">
+          <label class="reject-label">Причина отклонения для горничной</label>
+          <textarea class="reject-textarea" id="reject-comment-input" readonly>Перемыть зеркало, доложить полотенце</textarea>
+        </div>
+        <div class="reject-actions">
+          <button class="btn-reject-confirm" id="btn-reject-confirm-action">ОТКЛОНИТЬ</button>
+          <button class="btn-reject-cancel" onclick="closeRejectSheet()">Отмена</button>
+        </div>
+      </div>
+
+      <!-- Модальное окно завершения сценария -->
+      <div class="finish-overlay" id="finish-modal">
+        <div class="finish-card">
+          <div class="finish-icon" id="finish-icon-box">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" id="finish-icon-svg">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </div>
+          <h3 class="finish-title" id="finish-title-text">Результат отклонён!</h3>
+          <p class="finish-desc" id="finish-desc-text">Вы отклонили уборку в номере 6 и передали замечание горничной: «Перемыть зеркало, доложить полотенце». Номер возвращён в статус «Грязно» для повторного обслуживания.</p>
+          <button class="finish-restart-btn" onclick="resetSimulator()">Тренажер завершен. Пройти заново</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Шаги сценария Супервайзера:
+    // 0: Меню открыто -> Клик по "Обслуживание номеров [NEW]"
+    // 1: Дашборд -> Клик по карточке "ГРЯЗНО 21"
+    // 2: Переход во вкладку "УБОРКИ"
+    // 3: В строке номера 6 клик по кнопке трех точек ⋮
+    // 4: В меню клик по "Отклонить результат" (подсвечен) либо "Подтвердить проверку"
+    // 5: Открыта шторка отклонения -> Клик по кнопке "ОТКЛОНИТЬ"
+    // 6: Финал
+    var currentStep = 0;
+
+    var drawerOverlay = document.getElementById('drawer-overlay');
+    var drawerMenu = document.getElementById('drawer-menu');
+    var navHousekeeping = document.getElementById('nav-housekeeping-sup');
+    var cardDirty = document.getElementById('card-dirty-21');
+    var tabCleanings = document.getElementById('tab-sup-cleanings');
+    var btnDots6 = document.getElementById('btn-dots-6');
+    var popover6 = document.getElementById('popover-sup-6');
+    var itemConfirm = document.getElementById('item-confirm-check');
+    var itemReject = document.getElementById('item-reject-check');
+    var rejectBackdrop = document.getElementById('reject-backdrop');
+    var rejectSheet = document.getElementById('reject-sheet');
+    var btnRejectConfirm = document.getElementById('btn-reject-confirm-action');
+
+    var badge6 = document.getElementById('badge-sup-6');
+    var room6StateLabel = document.getElementById('room-6-state-label');
+    var supRejectComment = document.getElementById('sup-reject-comment');
+    var finishModal = document.getElementById('finish-modal');
+    var finishIconBox = document.getElementById('finish-icon-box');
+    var finishIconSvg = document.getElementById('finish-icon-svg');
+    var finishTitleText = document.getElementById('finish-title-text');
+    var finishDescText = document.getElementById('finish-desc-text');
+
+    var headerNavBtn = document.getElementById('header-nav-btn');
+    var headerIconSvg = document.getElementById('header-icon-svg');
+    var headerTitleText = document.getElementById('header-title-text');
+    var filterCounter = document.getElementById('filter-counter');
+    var todayTabs = document.getElementById('today-tabs');
+    var listTabs = document.getElementById('list-tabs');
+    var viewDashboard = document.getElementById('view-dashboard');
+    var viewCleaningsSup = document.getElementById('view-cleanings-sup');
+
+    function clearHighlights() {
+      var elements = document.querySelectorAll('.pulse-target');
+      elements.forEach(function(el) {
+        el.classList.remove('pulse-target');
+      });
+    }
+
+    function updateStep() {
+      clearHighlights();
+
+      if (currentStep === 0) {
+        // Шаг 0: боковое меню открыто, подсвечиваем Обслуживание номеров
+        openDrawer();
+        navHousekeeping.classList.add('pulse-target');
+      } else if (currentStep === 1) {
+        // Шаг 1: дашборд, подсвечиваем карточку ГРЯЗНО 21
+        cardDirty.classList.add('pulse-target');
+      } else if (currentStep === 2) {
+        // Шаг 2: подсвечиваем вкладку УБОРКИ
+        tabCleanings.classList.add('pulse-target');
+      } else if (currentStep === 3) {
+        // Шаг 3: подсвечиваем кнопку трех точек ⋮ у номера 6
+        btnDots6.classList.add('pulse-target');
+      } else if (currentStep === 4) {
+        // Шаг 4: подсвечиваем пункт "Отклонить результат" (как запросил пользователь)
+        itemReject.classList.add('pulse-target');
+      } else if (currentStep === 5) {
+        // Шаг 5: в шторке подсвечиваем кнопку "ОТКЛОНИТЬ"
+        btnRejectConfirm.classList.add('pulse-target');
+      } else if (currentStep === 6) {
+        // Шаг 6: финал
+        finishModal.classList.add('active');
+      }
+    }
+
+    function openDrawer() {
+      drawerOverlay.classList.add('active');
+      drawerMenu.classList.add('open');
+    }
+
+    function closeDrawer() {
+      drawerOverlay.classList.remove('active');
+      drawerMenu.classList.remove('open');
+    }
+
+    // Клик по бургеру в шапке
+    headerNavBtn.addEventListener('click', function() {
+      if (currentStep === 1) {
+        openDrawer();
+      } else if (currentStep >= 2) {
+        goToDashboard();
+      }
+    });
+
+    // ШАГ 0: Выбор Обслуживание номеров в боковом меню
+    navHousekeeping.addEventListener('click', function() {
+      if (currentStep !== 0) return;
+      closeDrawer();
+      currentStep = 1;
+      setTimeout(function() {
+        updateStep();
+      }, 300);
+    });
+
+    // ШАГ 1: Клик по карточке ГРЯЗНО 21
+    cardDirty.addEventListener('click', function() {
+      if (currentStep !== 1) return;
+
+      goToListMode();
+      currentStep = 2;
+      setTimeout(function() {
+        updateStep();
+      }, 250);
+    });
+
+    // ШАГ 2: Клик по вкладке УБОРКИ
+    tabCleanings.addEventListener('click', function() {
+      if (currentStep !== 2) return;
+
+      viewCleaningsSup.style.display = 'flex';
+      currentStep = 3;
+      setTimeout(function() {
+        updateStep();
+      }, 200);
+    });
+
+    // ШАГ 3: Клик по трем точкам ⋮ у номера 6
+    btnDots6.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (currentStep !== 3) return;
+
+      popover6.style.display = 'flex';
+      currentStep = 4;
+      setTimeout(function() {
+        updateStep();
+      }, 200);
+    });
+
+    // ШАГ 4 (ВЕТКА ОТКЛОНЕНИЯ): Клик по "Отклонить результат"
+    itemReject.addEventListener('click', function(e) {
+      e.stopPropagation();
+      popover6.style.display = 'none';
+
+      openRejectSheet();
+      currentStep = 5;
+      setTimeout(function() {
+        updateStep();
+      }, 250);
+    });
+
+    // ШАГ 5: В шторке клик по "ОТКЛОНИТЬ"
+    btnRejectConfirm.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeRejectSheet();
+
+      // Статус уборки -> Отклонено (красный бейдж)
+      badge6.className = 'status-badge rejected';
+      badge6.innerText = 'Отклонено';
+
+      // Номер возвращается в состояние "Грязно"
+      room6StateLabel.className = 'sup-room-state state-dirty';
+      room6StateLabel.innerText = 'Грязно';
+
+      // Показываем блок замечания супервайзера
+      supRejectComment.style.display = 'flex';
+
+      // Настройка финального модального окна для отклонения
+      finishIconBox.className = 'finish-icon';
+      finishIconSvg.innerHTML = '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>';
+      finishTitleText.innerText = 'Результат отклонён!';
+      finishDescText.innerText = 'Вы успешно отклонили уборку в номере 6 и передали замечание горничной: «Перемыть зеркало, доложить полотенце». Номер возвращён в статус «Грязно» для повторного обслуживания.';
+
+      currentStep = 6;
+      setTimeout(function() {
+        updateStep();
+      }, 600);
+    });
+
+    // ВЕТКА ПОДТВЕРЖДЕНИЯ (если пользователь захочет нажать "Подтвердить проверку")
+    itemConfirm.addEventListener('click', function(e) {
+      e.stopPropagation();
+      popover6.style.display = 'none';
+
+      badge6.className = 'status-badge checked';
+      badge6.innerText = 'Проверено';
+
+      var dashCount = document.getElementById('dash-checked-count');
+      if (dashCount) dashCount.innerText = '4';
+
+      finishIconBox.className = 'finish-icon success-icon';
+      finishIconSvg.innerHTML = '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>';
+      finishTitleText.innerText = 'Проверка подтверждена!';
+      finishDescText.innerText = 'Вы подтвердили качественное выполнение уборки в номере 6. Номер переведён в статус «Проверено».';
+
+      currentStep = 6;
+      setTimeout(function() {
+        updateStep();
+      }, 400);
+    });
+
+    function openRejectSheet() {
+      rejectBackdrop.classList.add('active');
+      rejectSheet.classList.add('open');
+    }
+
+    function closeRejectSheet() {
+      rejectBackdrop.classList.remove('active');
+      rejectSheet.classList.remove('open');
+    }
+
+    function goToListMode() {
+      headerIconSvg.innerHTML = '<path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>';
+      headerTitleText.innerText = 'Грязно';
+      filterCounter.style.display = 'flex';
+
+      todayTabs.style.display = 'none';
+      listTabs.style.display = 'flex';
+
+      viewDashboard.style.display = 'none';
+      viewCleaningsSup.style.display = 'flex';
+    }
+
+    function goToDashboard() {
+      headerIconSvg.innerHTML = '<path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>';
+      headerTitleText.innerText = 'Обслуживание номеров';
+      filterCounter.style.display = 'none';
+
+      todayTabs.style.display = 'flex';
+      listTabs.style.display = 'none';
+
+      viewDashboard.style.display = 'flex';
+      viewCleaningsSup.style.display = 'none';
+      popover6.style.display = 'none';
+    }
+
+    function resetSimulator() {
+      finishModal.classList.remove('active');
+      popover6.style.display = 'none';
+      closeRejectSheet();
+
+      // Сброс бейджа и состояния номера 6
+      badge6.className = 'status-badge completed';
+      badge6.innerText = 'Выполнено';
+
+      room6StateLabel.className = 'sup-room-state state-living';
+      room6StateLabel.innerText = 'Проживание';
+
+      supRejectComment.style.display = 'none';
+
+      goToDashboard();
+
+      // Возврат на шаг 0
+      currentStep = 0;
+      updateStep();
+    }
+
+    // Старт
+    updateStep();
+  </script>
+</body>
+</html>
